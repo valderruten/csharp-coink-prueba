@@ -1,0 +1,8 @@
+bin/
+obj/
+*.exe
+*.pdf
+*.log
+*.user
+*.db
+*.DS_Store
