@@ -1,22 +1,20 @@
-CsharpCoink – Prueba Técnica Backend (.NET / PostgreSQL)
+# CsharpCoink – Prueba Técnica Backend (.NET / PostgreSQL)
 
-Este proyecto se trata de una pequeña API para .NET 9 a la que se le ha hecho uso del Minimal API y de PostgreSQL como BD, donde hay que registrar un usuario junto a su información personal y la ubicación a la que pertenece (país, departamento, municipio), cumpliendo así con las reglas de validación y relación que trata la prueba técnica.
+Este proyecto es una pequeña API en .NET 9 (Minimal API) que utiliza PostgreSQL como base de datos. Permite registrar un usuario con su información personal y la ubicación a la que pertenece (país, departamento, municipio), cumpliendo las reglas de validación y relaciones definidas.
 
-1. Tecnologías utilizadas
+## 1. Tecnologías utilizadas
 
-.NET 9 (Minimal API)
+- .NET 9 (Minimal API)
+- PostgreSQL 16
+- PL/pgSQL (para la función de inserción)
+- Npgsql (driver oficial para PostgreSQL)
+- Swagger / OpenAPI
 
-PostgreSQL 16
+## 2. Estructura del proyecto
 
-PL/pgSQL (para la función de inserción)
+Estructura principal dentro de `CsharpCoink.Api`:
 
-Npgsql (driver oficial para PostgreSQL)
-
-Swagger / OpenAPI
-
-El proyecto no es complejo, es sencillo y directo, a la par con que está organizado de forma que resulte fácil de revisar y de ejecutar.
-
-2. Estructura del proyecto
+```
 CsharpCoink.Api/
 │
 ├── Endpoints/
@@ -31,82 +29,72 @@ CsharpCoink.Api/
 ├── Program.cs
 ├── appsettings.json
 └── README.md
+```
 
+Los folders están separados según la responsabilidad para mantener el código simple de entender y modificar.
 
-Los folders están separados de acuerdo con la responsabilidad que tiene cada uno para que el código resulte simple de entender y de modificar.
+## 3. Ajuste de conexión
 
-3. Ajuste de Enlace
+Modifica la cadena de conexión a PostgreSQL dentro del fichero `appsettings.json`:
 
-Modifica el enlace con PostgreSQL dentro del fichero appsettings.json:
-
+```json
 {
   "ConnectionStrings": {
     "PostgresConnection": "Host=localhost;Port=5432;Database=csharp_coink;Username=postgres;Password=EL_PASSWORD"
   }
 }
+```
 
-4. Ficheros SQL Incluidos
+Reemplaza `EL_PASSWORD` por la contraseña de tu usuario `postgres`.
 
-En el directorio /sql hallarás los comandos requeridos para establecer la base de datos:
+## 4. Ficheros SQL incluidos
 
-01_create_tables.sql
+En el directorio `sql/` encontrarás los scripts para preparar la base de datos:
 
-Genera las tablas:
+- `01_create_tables.sql`  
+  Genera las tablas: `pais`, `departamento`, `municipio`, `usuario` e incluye las relaciones necesarias (pais → departamento → municipio).
 
-pais
+- `02_insert_data.sql`  
+  Inserta datos de ejemplo iniciales.
 
-departamento
+- `03_fn_registrar_usuario.sql`  
+  Rutina PL/pgSQL que:
+  - Confirma la existencia de país, departamento y municipio.
+  - Verifica la correspondencia correcta entre ellos.
+  - Inserta el nuevo usuario y devuelve el ID creado.
+  - Emplea `RAISE EXCEPTION` para reportar fallos evidentes.
 
-municipio
+## 5. Pasos para iniciar el programa
 
-usuario
+1. Crear la base de datos (ejecutar en psql o en una consola con privilegios):
 
-Incluyendo los vínculos precisos para asegurar la concordancia entre país → departamento → municipio.
-
-02_insert_data.sql
-
-Introduce información de muestra inicial.
-
-03_fn_registrar_usuario.sql
-
-Una rutina PL/pgSQL que:
-
-confirma la existencia de país, departamento y municipio
-
-verifica su correcta correspondencia
-
-añade el nuevo usuario
-
-devuelve el identificador creado
-
-emplea RAISE EXCEPTION para reportar fallos evidentes
-
-5. Pasos para Iniciar el Programa
-
-Primero, haz la base de datos:
-
+```sql
 CREATE DATABASE csharp_coink WITH ENCODING 'UTF8';
+```
 
+2. Aplicar los scripts SQL en el siguiente orden:
+   - `01_create_tables.sql`
+   - `02_insert_data.sql`
+   - `03_fn_registrar_usuario.sql`
 
-Luego, aplica los tres ficheros SQL en esta secuencia:
+3. Configurar la cadena de conexión en `appsettings.json`.
 
-01_create_tables.sql
+4. Ejecutar la API:
 
-02_insert_data.sql
-
-03_fn_registrar_usuario.sql
-
-Inicia la API con:
-
+```powershell
 dotnet run
+```
 
+Swagger (OpenAPI) se activa automáticamente en el entorno `Development` y quedará disponible en:
+`https://localhost:xxxx/swagger`
 
-Accede a Swagger (se activa sola en el entorno Development):
+## 6. Ejemplo para registrar un usuario
 
-https://localhost:xxxx/swagger
+POST `/usuarios`
 
-6. Ejemplo para registrar un usuario
-POST /usuarios
+Request (JSON):
+
+```json
 {
   "nombre": "Carlos Perez",
   "telefono": "3001234567",
@@ -115,67 +103,71 @@ POST /usuarios
   "departamentoId": 1,
   "municipioId": 1
 }
+```
 
+Respuesta exitosa:
 
-Respuesta:
-
+```json
 {
   "id": 1,
   "mensaje": "Usuario registrado exitosamente."
 }
+```
 
-7. Validaciones incluidas
+## 7. Validaciones incluidas
 
-El API se encarga de validar lo siguiente:
+Validaciones realizadas por la API:
 
-Que el nombre tenga al menos 3 caracteres.
+- `nombre`: mínimo 3 caracteres.
+- `telefono`: solo numérico, entre 7 y 15 dígitos.
+- `direccion`: mínimo 5 caracteres.
+- `paisId`, `departamentoId`, `municipioId`: deben ser mayores que cero.
 
-Que el teléfono sea numérico y tenga entre 7 y 15 dígitos.
+Validaciones realizadas por la base de datos (función PL/pgSQL):
 
-Que la dirección tenga mínimo 5 caracteres.
+- El `departamento` pertenece al `pais` indicado.
+- El `municipio` pertenece al `departamento` indicado.
 
-Que los IDs sean mayores a cero.
+Estas reglas se distribuyen entre la API y la función en PostgreSQL para garantizar integridad antes del guardado.
 
-Por su parte, la base de datos comprueba:
+## 8. Manejo de errores
 
-Que el departamento realmente pertenezca al país indicado.
+Errores por relaciones mal definidas (ejemplo):
 
-Que el municipio esté dentro del departamento correspondiente.
-
-Estas reglas están distribuidas entre el API y una función en PostgreSQL para garantizar que la información sea válida antes de guardarse.
-
-8. Manejo de errores
-
-Cuando hay errores por relaciones mal definidas, se devuelve un mensaje parecido a este:
-
+```json
 {
   "error": "El departamento 10 no pertenece al pais 1"
 }
+```
 
+Errores internos inesperados (ejemplo):
 
-Un error inesperado devuelve:
-
+```json
 {
   "title": "Error interno del servidor",
   "detail": "Mensaje técnico..."
 }
+```
 
-9. Decisiones técnicas
+## 9. Decisiones técnicas
 
-Minimal API: Se optó por este enfoque porque permite una estructura limpia y directa, ideal para este tipo de pruebas técnicas.
+- Minimal API: elección para una estructura limpia y directa.
+- Uso de funciones en PostgreSQL: facilita retorno del ID y manejo de transacciones.
+- Patrón Repository: separa la lógica de acceso a datos de los endpoints.
+- Sin Entity Framework: todas las operaciones se manejan mediante stored procedures/funciones (sin ORM), tal como indica la prueba.
 
-Uso de funciones en PostgreSQL: Ayuda a retornar directamente el ID del usuario y facilita el manejo de transacciones de forma más fluida.
+## 10. Estado actual del proyecto
 
-Patrón "Repository": Se implementó para mantener la lógica de acceso a datos separada de los endpoints, lo que mejora la organización del código.
+- ✔ Modelo relacional completo
+- ✔ Función en PL/pgSQL para insertar datos con validaciones
+- ✔ API con validaciones, inyección de dependencias y estructura por capas
+- ✔ Manejo adecuado de errores
+- ✔ Proyecto listo para ejecutarse y ser revisado
 
-Sin Entity Framework: Tal como lo indica la prueba, todas las operaciones se manejan mediante stored procedures o funciones, sin uso de ORMs.
+---
 
-10. Estado actual del proyecto
+Si quieres, puedo:
+- Reemplazar el archivo `Readme.md` en el repositorio con este contenido.
+- Generar una versión en inglés.
 
-Actualmente, el sistema cumple con lo siguiente:
-
-✔ Modelo relacional completo
-✔ Función en PL/pgSQL para insertar datos con validaciones
-✔ API con validaciones, inyección de dependencias y estructura por capas
-✔ Manejo adecuado de errores
-✔ Proyecto listo para ejecutarse y ser revisado
+He reemplazado el contenido en español. ¿Deseas que haga el commit y push de este cambio?
