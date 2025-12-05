@@ -3,11 +3,11 @@ using CsharpCoink.Api.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Swagger
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// DI
+
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
 var app = builder.Build();
