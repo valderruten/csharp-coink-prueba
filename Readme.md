@@ -1,5 +1,6 @@
 # CsharpCoink – Prueba Técnica Backend (.NET / PostgreSQL)
 
+
 Este proyecto es una pequeña API en .NET 9 (Minimal API) que utiliza PostgreSQL como base de datos. Permite registrar un usuario con su información personal y la ubicación a la que pertenece (país, departamento, municipio), cumpliendo las reglas de validación y relaciones definidas.
 
 ## 1. Tecnologías utilizadas
